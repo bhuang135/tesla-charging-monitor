@@ -151,9 +151,9 @@ def render_report_in_app(df: pd.DataFrame,
     # SECTION 1 — ❤️ 健康分析（最重要、放最前面）
     # ===================================================================
     st.markdown("---")
-    st.markdown("## ❤️ 電池健康代理分析（結論優先）")
+    st.markdown("## ❤️ 電池健康程度分析（結論優先）")
     st.caption("⚠️ 本分析為代理（proxy）分析，不是正式 Tesla 電池診斷。")
-    md.append("\n---\n\n## ❤️ 電池健康代理分析（結論優先）\n\n"
+    md.append("\n---\n\n## ❤️ 電池健康程度分析（結論優先）\n\n"
               "> ⚠️ 本分析為代理（proxy）分析，不是正式 Tesla 電池診斷。\n")
 
     summary = health_proxy_summary(df, thresholds=thresholds)
