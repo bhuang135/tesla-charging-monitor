@@ -8,7 +8,7 @@ This version includes built-in multilingual UI support:
 - 简体中文
 - English
 
-Users can switch language from the floating language bubble at the bottom-right corner of every screen. Browser auto-translation is not required and is only a fallback.
+Users can switch language from the floating language bubble at the top-right corner of every screen. Browser auto-translation is not required and is only a fallback.
 
 > ⚠️ This app does **not** perform official Tesla battery diagnostics. Without kWh charged, real battery capacity, or BMS data, the app provides proxy analysis only.
 
