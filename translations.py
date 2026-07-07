@@ -1371,6 +1371,23 @@ _EN_TERM_REPLACEMENTS = {
     "另": "another",
 }
 
+
+# Final English overrides to prevent partial phrase fallback such as "Battery Healthtext".
+_EN_TERM_REPLACEMENTS.update({
+    "電池健康程度分析": "Battery Health Analysis",
+    "電池健康程度分析（結論優先）": "Battery Health Analysis (Conclusion First)",
+    "電池健康分析報告": "Battery Health Analysis Report",
+    "電池健康程度": "Battery Health",
+    "健康程度分析": "Health Analysis",
+    "程度分析": "Analysis",
+    "程度": "",
+})
+_EN_EXACT.update({
+    "電池健康程度分析": "Battery Health Analysis",
+    "電池健康程度分析（結論優先）": "Battery Health Analysis (Conclusion First)",
+    "電池健康分析報告": "Battery Health Analysis Report",
+})
+
 _EN_PUNCT_TRANSLATION = str.maketrans({
     "，": ", ", "。": ".", "：": ": ", "；": "; ", "！": "!", "？": "?",
     "（": "(", "）": ")", "「": "\"", "」": "\"", "『": "\"", "』": "\"",
@@ -1426,10 +1443,12 @@ def _strict_english_cleanup(text: str) -> str:
         for ch in seg:
             parts.append(_EN_TERM_REPLACEMENTS.get(ch, ""))
         joined = " ".join([p for p in parts if p]).strip()
-        return joined if joined else "text"
+        return joined if joined else ""
 
     out = re.sub(r"[\u4e00-\u9fff]+", _fallback, out)
     # Clean repeated spaces and spacing around punctuation/HTML tags.
+    out = out.replace("Battery Healthtext", "Battery Health Analysis")
+    out = out.replace("Battery Health text", "Battery Health Analysis")
     out = re.sub(r" {2,}", " ", out)
     out = out.replace(" ,", ",").replace(" .", ".").replace(" :", ":")
     out = out.replace("( ", "(").replace(" )", ")")

@@ -899,10 +899,10 @@ render_floating_language_switcher(st, page="main")
 
 # ---------- 頂部標題 ----------
 st.markdown(
-    """
+    f"""
     <div class="app-header">
-        <div class="app-title">🔋 Tesla 充電健康監測</div>
-        <div class="app-sub">電池健康程度分析</div>
+        <div class="app-title">🔋 {tr("Tesla 充電健康監測")}</div>
+        <div class="app-sub">{tr("電池健康程度分析")}</div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -1622,7 +1622,7 @@ with tabs[3]:
 # 分頁 5 — 電池健康程度分析
 # =====================================================================
 with tabs[4]:
-    section_header("電池健康程度分析")
+    section_header(tr("電池健康程度分析"))
     st.caption(
         "⚠️ 這是基於里程與電量百分比行為的**代理（proxy）**分析，"
         "**不是**正式的 Tesla 電池診斷。"
