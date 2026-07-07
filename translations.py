@@ -835,3 +835,929 @@ def patch_streamlit(st: Any) -> None:
             setattr(st, name, df_wrapper)
 
     st._tesla_i18n_patched = True
+
+# ---------------------------------------------------------------------
+# STRICT LANGUAGE OVERRIDES
+# ---------------------------------------------------------------------
+# The functions below intentionally override the lighter translation layer
+# above. They enforce the product rule:
+# - zh-TW: display Traditional Chinese
+# - zh-CN: display Simplified Chinese
+# - en: display English with no remaining CJK characters in rendered text
+
+_EN_STRICT_REPLACEMENTS = {
+    # Whole / common sentences
+    "追蹤並分析 Tesla 充電行為，跨多個時間區間（年、季、月、週、日、季節）。": "Track and analyze Tesla charging behavior across year, quarter, month, week, day, and season.",
+    "提供基於里程、電量百分比、充電頻率與行為模式的**電池健康代理（proxy）分析**。": "Provide **battery health proxy analysis** based on mileage, battery percentage, charging frequency, and behavior patterns.",
+    "注意：本工具不執行正式的 Tesla 電池診斷。沒有 kWh 充電量、實際電池容量或 BMS": "Note: This tool does not perform official Tesla battery diagnostics. Without kWh charged, actual battery capacity, or BMS",
+    "資料的情況下，只能做代理分析。": "data, it can only provide proxy analysis.",
+    "啟動方式：streamlit run app.py": "Run with: streamlit run app.py",
+    "傳回固定時區 — 為了與其他程式碼介面相容而保留此函式。": "Return a fixed timezone; kept for compatibility with other code paths.",
+    "回傳 Los Angeles 時區的今天日期。": "Return today's date in the Los Angeles timezone.",
+    "這是 deployment-safe 的：不論 Streamlit Cloud server 跑在哪個時區，": "This is deployment-safe: regardless of which timezone the Streamlit Cloud server uses,",
+    "使用者看到的都是 LA 當地的今日。": "the user always sees today's local date in Los Angeles.",
+    "自動處理 DST（夏令時）切換。": "DST changes are handled automatically.",
+    "讀取圖片並轉成 data URI。": "Read an image and convert it to a data URI.",
+    "Tesla 風格 Welcome 首頁 — 強制一螢幕 fit，所有元素在 100dvh 內。": "Tesla-style welcome page; forced to fit in one screen within 100dvh.",
+    "Loading 畫面 — 動畫車身 + 進度條，2.5 秒後自動進入主 app。": "Loading screen with animated car body and progress bar; enters the main app automatically.",
+    "為什麼需要控制變數比較？": "Why controlled comparison matters?",
+    "這是基於里程與電量百分比行為的**代理（proxy）**分析，**不是**正式的 Tesla 電池診斷。": "This is **proxy analysis** based on mileage and battery-percentage behavior; it is **not** an official Tesla battery diagnosis.",
+    "必要欄位：`charging_date`（或 `year`+`month`+`date` 三欄），`odometer_miles`（或 `Odometer ...`），`start_battery_pct`（或 `battery Start %`）。可選欄位：`final_battery_pct`（缺則預設 80）。電量可為 0-1 小數或 0-100 整數，會自動偵測。": "Required columns: `charging_date` or `year` + `month` + `date`, `odometer_miles` or `Odometer ...`, and `start_battery_pct` or `battery Start %`. Optional column: `final_battery_pct`, defaulting to 80 if missing. Battery values can be decimals from 0-1 or integers from 0-100 and will be detected automatically.",
+    "請確認專案結構為": "Please confirm the project structure is",
+    "缺少 `modules/` 資料夾": "Missing the `modules/` folder",
+    "此程式位於": "This program is located at",
+    "預期找到資料夾": "Expected folder",
+    "目前": "Current",
+    "內含": "contains",
+    "其他模組": "other modules",
+    "缺少檔案": "Missing file",
+    "請在": "Please add it in",
+    "中新增一個空的": "as an empty",
+    "檔案": "file",
+    "時區": "Timezone",
+    "今日": "Today",
+    "本 App 使用 **Google Gemini Vision** 辨識照片中的里程與電量。": "This app uses **Google Gemini Vision** to detect mileage and battery level from photos.",
+    "為了降低季節偏差，本比較固定**同季節/同月份/同季跨年**進行對照。": "To reduce seasonal bias, this comparison fixes the same season, same month, or same quarter across years.",
+    "尚未選擇": "Not selected",
+    "提示：先到": "Tip: first go to",
+    "分頁挑好你要的篩選，再回來按下方按鈕。": "tabs to choose your filters, then come back and click the button below.",
+    "若您在 `.streamlit/secrets.toml` 或環境變數中已設定 `GEMINI_API_KEY`，則此處可留空。否則請在下方貼上 API Key（不會儲存於程式碼，僅存於目前 session）。": "If `GEMINI_API_KEY` is already set in `.streamlit/secrets.toml` or environment variables, you may leave this blank. Otherwise, paste your API key below. It will not be saved in the code and only stays in the current session.",
+    "取得 Gemini API Key": "Get Gemini API Key",
+    "已從照片帶入數值": "Values were loaded from the photo",
+    "您仍可手動編輯下方欄位，再按「確認儲存」。": "You can still manually edit the fields below, then click Save Record.",
+    "結束電量": "Ending battery",
+    "起始電量": "Starting battery",
+    "小於": "is lower than",
+    "前一筆": "the previous record",
+    "請確認": "please confirm",
+    "此次增加電量": "Battery added this session",
+    "本 App 採用北半球氣候季節定義": "This app uses Northern Hemisphere climate season definitions",
+    "使用本地 CSV 儲存": "Using local CSV storage",
+    "App 重啟後會回到 GitHub repo 中的初始狀態。請參考 `SETUP_GOOGLE_SHEETS.md` 設定 Google Sheets 儲存以保留資料。": "After the app restarts, it will return to the initial state in the GitHub repo. See `SETUP_GOOGLE_SHEETS.md` to configure Google Sheets storage and keep your data.",
+    "貼上 API Key": "Paste API Key",
+    "預覽": "Preview",
+    "Gemini 從照片辨識出以下數值": "Gemini detected the following values from the photo",
+    "信心度": "confidence",
+    "請確認數值是否正確": "Please confirm whether the values are correct",
+    "若有錯誤可直接編輯，再按下「確認並帶入」。": "If anything is wrong, edit it directly, then click Confirm and Apply.",
+    "取消，重新辨識": "Cancel and Scan Again",
+    "里程": "Mileage",
+    "距離上次充電里程": "Miles since last charge",
+    "該月份無跨年資料。": "No cross-year data for this month.",
+    "春季與秋季通常氣候相近（無極端冷熱）。": "Spring and fall usually have similar mild weather without extreme heat or cold.",
+    "報告產生器模組載入失敗": "Report generator module failed to load",
+    "可能原因": "Possible reason",
+    "解法": "Solution",
+    "確認最新的 `modules/report_generator.py` 已 push 到 GitHub": "Confirm the latest `modules/report_generator.py` has been pushed to GitHub",
+    "到 Streamlit Cloud → Manage app → **Reboot app**": "Go to Streamlit Cloud → Manage app → **Reboot app**",
+    "若仍失敗": "If it still fails",
+    "已設自訂閾值": "Custom thresholds set",
+    "使用預設閾值": "Using default thresholds",
+    "資料庫總筆數": "Total database records",
+    "起始 %": "Start %",
+    "結束 %": "End %",
+    "增加 %": "Added %",
+    "無法自動擷取，請手動輸入。": "Could not extract automatically. Please enter the values manually.",
+    "已帶入": "Applied",
+    "該季節無跨年資料。": "No cross-year data for this season.",
+    "無春/秋季資料。": "No spring/fall data.",
+    "無冬季資料。": "No winter data.",
+    "另有": "There are another",
+    "個未顯示": "items not shown",
+    "該週無跨年資料。": "No cross-year data for this week.",
+    "該月無資料。": "No data for this month.",
+    "該年無可用週數。": "No available week numbers for this year.",
+    "該週無資料。": "No data for this week.",
+    "通用長條圖。": "Generic bar chart.",
+    "每月充電頻率長條圖。": "Monthly charging frequency bar chart.",
+    "資料不足，需要更多充電紀錄才能判斷。": "Not enough data. More charging records are needed for evaluation.",
+    "缺少結束電量，因此無法判斷充電增加電量。": "Ending battery is missing, so battery added cannot be evaluated.",
+    "無資料可分析。": "No data to analyze.",
+    "尚無紀錄，無法產生報告。": "No records yet, so a report cannot be generated.",
+    "使用閾值": "Thresholds used",
+    "里程下降警示": "mileage drop alert",
+    "低電量比例警示": "low-battery rate alert",
+    "低電量定義": "low-battery definition",
+    "項紅色警示與": "red alerts and",
+    "項黃色注意": "yellow warnings",
+    "整體狀況尚可，但有可改善空間。": "overall status is acceptable, but there is room for improvement.",
+    "產生日期": "Generated date",
+    "資料筆數": "Number of records",
+    "指標": "Metric",
+    "數值": "Value",
+    "年，充電總次數": "year, total charging count",
+    "平均每年": "average per year",
+    "次。": "times.",
+    "充電次數明顯增加": "Charging count increased significantly",
+    "可能反映駕駛量增加或單次能跑的里程縮短。": "this may reflect more driving or fewer miles per charge.",
+    "充電次數減少": "Charging count decreased",
+    "駕駛量下降或單次可跑更遠。": "driving volume may be lower, or each charge may last longer.",
+    "反映**每次充電能跑多遠**。": "This reflects **how far the car can go per charging session**.",
+    "趨勢": "Trend",
+    "若非駕駛習慣改變可能反映電池效率衰退。": "if driving habits did not change, this may indicate battery efficiency decline.",
+    "電池效能穩定或駕駛變得節能。": "battery performance may be stable, or driving has become more efficient.",
+    "每次插上充電時的電量。": "Battery level when each charging session starts.",
+    "起始電量偏低": "Starting battery is relatively low",
+    "充飽後的電量。": "Battery level after charging.",
+    "經常充至 90% 以上": "Frequently charging above 90%",
+    "月度波動較大，可能與旅行/季節有關。": "Monthly variation is large and may be related to travel or seasonality.",
+    "充電頻率相對穩定。": "Charging frequency is relatively stable.",
+    "固定時間維度後跨年比較，降低季節偏差。": "Compare across years after fixing the time dimension to reduce seasonal bias.",
+    "Tesla 建議日常維持 20–80%": "Tesla generally recommends staying within 20–80% for daily use",
+    "您經常電量充足時就充電，請持續觀察每次的充電里程是否同步下降。": "You often charge while the battery is still sufficient. Continue observing whether miles per charge decline at the same time.",
+    "若多個控制條件下都呈下降，建議至 **Tesla 服務中心** 檢查。": "If multiple controlled comparisons all show decline, consider checking with a **Tesla Service Center**.",
+    "同季節跨年比較": "same-season cross-year comparison",
+    "可控制氣候影響，建議定期執行。": "can control for climate impact and should be run regularly.",
+    "未來若能加入 **kWh 充電量** 或 **預估里程**，可做真正效率分析。": "If future records include **kWh charged** or **estimated range**, true efficiency analysis can be performed.",
+    "持續追蹤**每 1% 電量可跑里程**是否下降。": "Continue tracking whether **miles per 1% battery** is declining.",
+    "由 Tesla 充電健康監測 App 自動產生。": "Generated automatically by the Tesla Charging Health Monitor app.",
+    "本報告為基於里程與電量行為的": "This report is based on mileage and battery behavior for",
+    "KPI 摘要": "KPI Summary",
+    "低電量比例": "Low-battery rate",
+    "比較分頁模式": "Comparison tab mode",
+    "控制分頁": "Control tab",
+    "繼承自其他分頁": "Inherited from other tabs",
+    "繼承自其他分頁的篩選": "Filters inherited from other tabs",
+    "以下圖表來自您在「比較」分頁中選擇的模式": "The following charts come from the mode selected in the Compare tab",
+    "在所選維度上的趨勢為": "trend in the selected dimension is",
+    "月從": "month from",
+    "間隔里程變化": "miles-between-charges change",
+    "控制 **": "Control **",
+    "變數後": "after controlling the variable",
+    "後，從": "after, from",
+    "控制季節後仍顯著下降": "still declines significantly after controlling for season",
+    "留意是否持續性衰退": "watch whether the decline is persistent",
+    "有輕微下降，可持續觀察。": "There is a slight decline; continue monitoring.",
+    "春/秋": "Spring/Fall",
+    "氣候相近": "similar climate",
+    "在氣候相近的春/秋季節之間，平均間隔里程的趨勢為": "Across similar-climate spring/fall seasons, the average miles-between-charges trend is",
+    "暫不支援為": "Automatic report generation is not yet supported for",
+    "的報告章節": "report section",
+    "不畫圖": "without charts",
+    "給舊呼叫端用": "for legacy callers",
+    "注入行動裝置友善的 CSS + viewport 設定。": "Inject mobile-friendly CSS and viewport settings.",
+    "傳回行內狀態徽章": "Return an inline status badge",
+    "格式化里程數字含千分位。空值傳回": "Format mileage with thousands separators. Empty values return",
+    "允許縮放": "Allow zooming",
+    "使用方式": "Usage",
+    "這樣做之後": "After doing this",
+    "滑動圖表時不會自動縮放": "charts will not auto-zoom while scrolling",
+    "雙指縮放仍會作用於整個頁面": "pinch-to-zoom still works on the whole page",
+    "UI 元件": "UI components",
+    "行動裝置優先 CSS": "mobile-first CSS",
+    "KPI 卡片": "KPI cards",
+    "區塊標題": "section headers",
+    "狀態徽章": "status badges",
+    "重要 UI 行為": "important UI behavior",
+    "標籤允許": "tag allows",
+    "雙指縮放": "pinch-to-zoom",
+    "標題避開": "header avoids",
+    "頂部工具列遮擋": "top toolbar overlap",
+    "分頁標籤橫向捲動且不重疊": "tab labels scroll horizontally and do not overlap",
+}
+
+_EN_TERM_REPLACEMENTS = {
+    # Core nouns and terms
+    "充電健康監測": "Charging Health Monitor",
+    "充電健康分析報告": "Charging Health Analysis Report",
+    "充電健康報告": "Charging Health Report",
+    "電池健康代理分析": "Battery Health Proxy Analysis",
+    "電池健康代理指標": "Battery Health Proxy Metrics",
+    "電池健康分析報告": "Battery Health Analysis Report",
+    "電池健康": "Battery Health",
+    "健康監測": "Health Monitor",
+    "健康分析": "Health Analysis",
+    "健康指標": "Health Metrics",
+    "健康狀態": "health status",
+    "健康結論": "Health Conclusion",
+    "充電紀錄": "charging records",
+    "充電行為": "charging behavior",
+    "充電頻率": "charging frequency",
+    "充電間隔里程": "miles between charges",
+    "充電增加電量": "battery added by charging",
+    "每年充電間隔平均里程": "annual average miles between charges",
+    "每年平均起始電量": "annual average starting battery",
+    "每年平均結束電量": "annual average ending battery",
+    "每年充電次數": "annual charging count",
+    "每月充電頻率": "monthly charging frequency",
+    "平均充電間隔里程": "average miles between charges",
+    "平均間隔里程": "average miles between charges",
+    "間隔里程中位數": "median miles between charges",
+    "最長間隔里程": "longest miles between charges",
+    "平均起始電量": "average starting battery",
+    "平均結束電量": "average ending battery",
+    "平均增加電量": "average battery added",
+    "最低起始電量": "lowest starting battery",
+    "低電量充電次數": "low-battery charging count",
+    "低電量充電比例": "low-battery charging rate",
+    "低電量比例": "low-battery rate",
+    "低電量": "low battery",
+    "深度放電": "deep discharge",
+    "電池壓力": "battery stress",
+    "電池壽命": "battery life",
+    "電池效率衰退": "battery efficiency decline",
+    "電池效能": "battery performance",
+    "電量百分比": "battery percentage",
+    "電量行為": "battery behavior",
+    "電量充足": "battery is sufficient",
+    "電量增加": "battery increase",
+    "電量": "battery level",
+    "里程差": "mileage difference",
+    "里程數": "odometer reading",
+    "里程縮短": "shorter mileage",
+    "里程趨勢": "odometer trend",
+    "里程下降": "mileage drop",
+    "里程": "mileage",
+    "儀表板": "dashboard",
+    "照片來源": "photo source",
+    "上傳照片": "upload photo",
+    "拍照": "take photo",
+    "手動輸入": "manual entry",
+    "手動模式": "manual mode",
+    "手動編輯": "manual edit",
+    "輸入方式": "input method",
+    "確認辨識結果": "confirm detection result",
+    "確認並帶入": "confirm and apply",
+    "確認儲存": "save record",
+    "確認": "confirm",
+    "辨識": "detect",
+    "擷取": "extract",
+    "暫存照片": "temporary photo",
+    "信心度": "confidence",
+    "備註": "notes",
+    "訊息": "message",
+    "新增充電紀錄": "add charging record",
+    "總覽儀表板": "overview dashboard",
+    "時段比較": "period comparison",
+    "控制變數比較": "controlled comparison",
+    "控制變數": "control variables",
+    "控制條件": "controlled conditions",
+    "控制": "control",
+    "比較": "compare",
+    "總覽": "overview",
+    "新增": "add",
+    "報告": "report",
+    "資料管理": "data management",
+    "資料庫": "database",
+    "資料": "data",
+    "紀錄": "record",
+    "筆數": "records",
+    "筆": "records",
+    "列": "rows",
+    "欄位": "columns",
+    "必要": "required",
+    "可選": "optional",
+    "匯入模式": "import mode",
+    "匯入": "import",
+    "匯出": "export",
+    "下載": "download",
+    "範本": "template",
+    "瀏覽與刪除": "browse and delete",
+    "刪除": "delete",
+    "清空所有資料": "clear all data",
+    "危險區": "danger zone",
+    "工作表": "worksheet",
+    "試算表": "spreadsheet",
+    "本地": "local",
+    "儲存": "storage",
+    "持久化": "persistent",
+    "載入": "load",
+    "讀取": "read",
+    "成功匯入": "successfully imported",
+    "無資料匯入": "no data imported",
+    "讀取失敗": "read failed",
+    "已刪除": "deleted",
+    "找不到該 ID": "could not find that ID",
+    "已清空所有資料": "all data has been cleared",
+    "尚無資料可匯出": "no data to export yet",
+    "尚無紀錄": "no records yet",
+    "無資料": "no data",
+    "資料不足": "not enough data",
+    "無可用年份": "no available years",
+    "無可用週數": "no available week numbers",
+    "異常偵測": "anomaly detection",
+    "異常事件": "anomaly events",
+    "紅色警示": "red alerts",
+    "黃色注意": "yellow warnings",
+    "注意": "warning",
+    "警示": "alert",
+    "正常": "normal",
+    "狀況": "status",
+    "閾值設定": "threshold settings",
+    "閾值": "threshold",
+    "可調整": "adjustable",
+    "結論優先": "conclusion first",
+    "結論": "conclusion",
+    "建議行動": "recommended actions",
+    "建議": "recommendation",
+    "優先處理": "prioritize",
+    "定期執行": "run regularly",
+    "持續觀察": "continue monitoring",
+    "持續追蹤": "continue tracking",
+    "代理分析": "proxy analysis",
+    "正式診斷": "official diagnosis",
+    "正式": "official",
+    "診斷": "diagnosis",
+    "不是": "is not",
+    "基於": "based on",
+    "季節定義": "season definition",
+    "季節調整趨勢": "seasonally adjusted trend",
+    "季節偏差": "seasonal bias",
+    "季節因素": "seasonality",
+    "季節": "season",
+    "春季": "Spring",
+    "夏季": "Summer",
+    "秋季": "Fall",
+    "冬季": "Winter",
+    "月份": "month",
+    "年份": "year",
+    "週數": "week number",
+    "星期": "weekday",
+    "同一季節": "same season",
+    "同月份": "same month",
+    "同月": "same month",
+    "同季": "same quarter",
+    "同週": "same week",
+    "同一年": "same year",
+    "不同月份": "different months",
+    "不同週": "different weeks",
+    "不同日": "different days",
+    "跨年比較": "cross-year comparison",
+    "跨年": "cross-year",
+    "依年份": "by year",
+    "依季節": "by season",
+    "依季": "by quarter",
+    "依月": "by month",
+    "依週": "by week",
+    "依日": "by day",
+    "月度波動": "monthly variation",
+    "氣候相近季節比較": "similar-climate season comparison",
+    "氣候相近": "similar climate",
+    "氣候": "climate",
+    "開冷氣": "air conditioning",
+    "開暖氣": "heating",
+    "電池預熱": "battery preconditioning",
+    "耗能": "energy consumption",
+    "篩選": "filters",
+    "模式": "mode",
+    "分析指標": "analysis metric",
+    "指標總覽": "indicator overview",
+    "指標": "indicator",
+    "圖表分析": "chart analysis",
+    "圖表": "chart",
+    "圖": "Figure",
+    "長條圖": "bar chart",
+    "解讀": "interpretation",
+    "關鍵指標": "key metrics",
+    "全部資料": "all data",
+    "趨勢圖": "trend charts",
+    "趨勢分析": "trend analysis",
+    "趨勢": "trend",
+    "上升": "increase",
+    "下降": "decline",
+    "持平": "flat",
+    "明顯增加": "significant increase",
+    "明顯上升": "significant increase",
+    "略為上升": "slight increase",
+    "明顯下降": "significant decline",
+    "略為下降": "slight decline",
+    "輕微下降": "slight decline",
+    "顯著下降": "significant decline",
+    "相對穩定": "relatively stable",
+    "穩定": "stable",
+    "改善": "improvement",
+    "衰退": "decline",
+    "可改善空間": "room for improvement",
+    "駕駛洞察": "Driving Insights",
+    "駕駛強度": "driving intensity",
+    "駕駛習慣": "driving habits",
+    "駕駛量": "driving volume",
+    "駕駛": "driving",
+    "智慧追蹤": "Smart Tracking",
+    "智能追踪": "Smart Tracking",
+    "全部集中管理": "all in one place",
+    "你的 Model 3，你的旅程": "Your Model 3. Your Journey",
+    "進入 Angela 的 Model 3": "Enter Angela's Model 3",
+    "进入 Angela 的 Model 3": "Enter Angela's Model 3",
+    "每次": "each time",
+    "平均每日": "average daily",
+    "累計": "cumulative",
+    "輕度": "light",
+    "中度": "moderate",
+    "高度": "heavy",
+    "使用": "use",
+    "日期": "date",
+    "今日": "today",
+    "時區": "timezone",
+    "選擇": "select",
+    "顯示原始資料": "show raw data",
+    "原始資料": "raw data",
+    "顯示": "show",
+    "開啟": "open",
+    "來源": "source",
+    "環境": "environment",
+    "變數": "variable",
+    "程式碼": "code",
+    "目前 session": "current session",
+    "目前": "current",
+    "可留空": "can be left blank",
+    "否則": "otherwise",
+    "下方": "below",
+    "貼上": "paste",
+    "不會": "will not",
+    "僅存於": "only stays in",
+    "已從環境讀取": "loaded from environment",
+    "必填": "required",
+    "自訂": "custom",
+    "預設": "default",
+    "增加": "added",
+    "結束": "ending",
+    "起始": "starting",
+    "最低": "lowest",
+    "最高": "highest",
+    "比例": "rate",
+    "頻率": "frequency",
+    "中位數": "median",
+    "平均": "average",
+    "總": "total",
+    "次數": "count",
+    "次": "times",
+    "年": "year",
+    "月": "month",
+    "週": "week",
+    "日": "day",
+    "季": "quarter",
+    "項": "items",
+    "個": "items",
+    "分頁": "tab",
+    "表格": "table",
+    "模式": "mode",
+    "內容": "content",
+    "產生": "generate",
+    "自動": "automatically",
+    "彙整": "summarize",
+    "完整": "complete",
+    "選好": "choose",
+    "挑好": "choose",
+    "回來": "come back",
+    "按": "click",
+    "按鈕": "button",
+    "無法": "unable to",
+    "需要": "need",
+    "更多": "more",
+    "判斷": "evaluate",
+    "清單": "list",
+    "空清單": "empty list",
+    "表示": "means",
+    "具體": "specific",
+    "提供": "provide",
+    "狀態": "status",
+    "說明": "description",
+    "綠": "green",
+    "黃": "yellow",
+    "紅": "red",
+    "設定": "settings",
+    "保留": "keep",
+    "相容": "compatibility",
+    "函式": "function",
+    "介面": "interface",
+    "程式": "program",
+    "資料夾": "folder",
+    "空的": "empty",
+    "讀取": "read",
+    "圖片": "image",
+    "轉成": "convert to",
+    "強制": "force",
+    "螢幕": "screen",
+    "元素": "elements",
+    "畫面": "screen",
+    "動畫": "animation",
+    "車身": "car body",
+    "進度條": "progress bar",
+    "秒後": "seconds later",
+    "進入": "enter",
+    "首頁": "home page",
+    "風格": "style",
+    "小於": "less than",
+    "高於": "above",
+    "以上": "or higher",
+    "範圍內": "within range",
+    "友善": "friendly",
+    "服務中心": "Service Center",
+    "檢查": "check",
+    "旅行": "travel",
+    "有關": "related",
+    "反映": "indicate",
+    "可能": "may",
+    "若": "if",
+    "並": "and",
+    "與": "and",
+    "或": "or",
+    "從": "from",
+    "至": "to",
+    "後": "after",
+    "前": "before",
+    "在": "in",
+    "為": "is",
+    "的": "",
+    "您": "you",
+    "請": "please",
+    "了": "",
+    "仍": "still",
+    "都": "all",
+    "就": "then",
+    "而": "and",
+    "才": "before",
+    "另": "another",
+}
+
+_EN_PUNCT_TRANSLATION = str.maketrans({
+    "，": ", ", "。": ".", "：": ": ", "；": "; ", "！": "!", "？": "?",
+    "（": "(", "）": ")", "「": "\"", "」": "\"", "『": "\"", "』": "\"",
+    "、": ", ", "　": " ", "—": " — ", "·": " · ", "→": "→",
+})
+
+# Extra Traditional-to-Simplified characters for stricter zh-CN rendering.
+_ZH_CN_CHARS.update(str.maketrans({
+    "彙": "汇", "僅": "仅", "儀": "仪", "錶": "表", "徑": "径", "據": "据",
+    "牆": "墙", "稱": "称", "雖": "虽", "叢": "丛", "擋": "挡", "擠": "挤",
+    "藏": "藏", "極": "极", "熱": "热", "凍": "冻", "毀": "毁", "絕": "绝",
+    "緯": "纬", "緻": "致", "層": "层", "觸": "触", "雖": "虽", "舊": "旧",
+    "畫": "画", "讀": "读", "貸": "贷", "貼": "贴", "獲": "获", "檔": "档",
+    "儀": "仪", "覺": "觉", "剛": "刚", "幾": "几", "錶": "表", "態": "态",
+    "雜": "杂", "龐": "庞", "聯": "联", "絡": "络", "網": "网", "頁": "页",
+}))
+
+
+def _contains_cjk(text: str) -> bool:
+    return bool(re.search(r"[\u4e00-\u9fff]", text))
+
+
+def _strict_english_cleanup(text: str) -> str:
+    out = text
+    # Apply phrase replacements longest first.
+    merged = {}
+    merged.update(_EN_PHRASES)
+    merged.update(_EN_STRICT_REPLACEMENTS)
+    merged.update(_EN_TERM_REPLACEMENTS)
+    for k, v in sorted(merged.items(), key=lambda item: len(item[0]), reverse=True):
+        out = out.replace(k, v)
+
+    # Numeric/time patterns commonly split across f-strings.
+    out = re.sub(r"第\s*([0-9]+)\s*週", r"Week \1", out)
+    out = re.sub(r"([0-9]{1,2})\s*月", r"Month \1", out)
+    out = re.sub(r"([0-9]{4})\s*年", r"\1", out)
+    out = re.sub(r"Q([0-9])\s*季", r"Q\1", out)
+
+    # Translate punctuation after words to avoid CJK punctuation.
+    out = out.translate(_EN_PUNCT_TRANSLATION)
+
+    # One more pass after punctuation spacing changed.
+    for k, v in sorted(_EN_TERM_REPLACEMENTS.items(), key=lambda item: len(item[0]), reverse=True):
+        out = out.replace(k, v)
+
+    # Remove or neutralize any remaining CJK sequences. This is a strict safety net
+    # so English mode never displays Chinese characters, even if a new string is
+    # added later without being mapped yet.
+    def _fallback(match):
+        seg = match.group(0)
+        # Try individual-character semantic fallbacks first.
+        parts = []
+        for ch in seg:
+            parts.append(_EN_TERM_REPLACEMENTS.get(ch, ""))
+        joined = " ".join([p for p in parts if p]).strip()
+        return joined if joined else "text"
+
+    out = re.sub(r"[\u4e00-\u9fff]+", _fallback, out)
+    # Clean repeated spaces and spacing around punctuation/HTML tags.
+    out = re.sub(r" {2,}", " ", out)
+    out = out.replace(" ,", ",").replace(" .", ".").replace(" :", ":")
+    out = out.replace("( ", "(").replace(" )", ")")
+    return out
+
+
+def _english(text: str) -> str:  # type: ignore[no-redef]
+    if text in _EN_EXACT:
+        out = _EN_EXACT[text]
+    else:
+        out = _strict_english_cleanup(text)
+    return _strict_english_cleanup(out) if _contains_cjk(out) or any(p in out for p in "，。：；！？（）「」『』、　") else out
+
+
+def _simplify(text: str) -> str:  # type: ignore[no-redef]
+    out = text
+    for k, v in sorted(_ZH_CN_PHRASES.items(), key=lambda item: len(item[0]), reverse=True):
+        out = out.replace(k, v)
+    out = out.translate(_ZH_CN_CHARS)
+    # Fix language labels and common app-specific terms.
+    out = out.replace("簡體中文", "简体中文").replace("繁體中文", "繁体中文")
+    out = out.replace("智慧追蹤", "智能追踪").replace("駕駛洞察", "驾驶洞察")
+    out = out.replace("趨勢分析", "趋势分析").replace("進入", "进入")
+    return out
+
+
+def translate_text(value: Any, lang: str | None = None) -> Any:  # type: ignore[no-redef]
+    if not isinstance(value, str):
+        return value
+    lang = lang or current_language()
+    if lang == "zh-TW":
+        return value
+    if lang == "zh-CN":
+        return _simplify(value)
+    if lang == "en":
+        return _english(value)
+    return value
+
+
+tr = translate_text  # type: ignore[assignment]
+
+
+def translate_dataframe_for_display(obj: Any, lang: str | None = None) -> Any:  # type: ignore[no-redef]
+    """Translate DataFrame columns and visible string cells for display only."""
+    try:
+        import pandas as pd  # type: ignore
+        if isinstance(obj, pd.DataFrame):
+            use_lang = lang or current_language()
+            df = obj.copy()
+            df.columns = [translate_text(str(c), lang=use_lang) for c in df.columns]
+            for col in df.columns:
+                try:
+                    if df[col].dtype == object or str(df[col].dtype).startswith("string"):
+                        df[col] = df[col].map(lambda x: translate_text(x, lang=use_lang) if isinstance(x, str) else x)
+                except Exception:
+                    pass
+            return df
+    except Exception:
+        pass
+    return obj
+
+
+def translate_plotly_figure(fig: Any, lang: str | None = None) -> Any:  # type: ignore[no-redef]
+    """Translate Plotly titles, axis labels, legends, hover text, and annotations."""
+    try:
+        fig = copy.deepcopy(fig)
+        use_lang = lang or current_language()
+        layout = fig.layout
+
+        if getattr(layout, "title", None) is not None and getattr(layout.title, "text", None):
+            layout.title.text = translate_text(layout.title.text, use_lang)
+
+        # Axis titles for common subplots.
+        for axis_name in ["xaxis", "yaxis", "xaxis2", "yaxis2", "xaxis3", "yaxis3"]:
+            axis = getattr(layout, axis_name, None)
+            if axis is not None and getattr(axis, "title", None) is not None:
+                if getattr(axis.title, "text", None):
+                    axis.title.text = translate_text(axis.title.text, use_lang)
+
+        if getattr(layout, "annotations", None):
+            for ann in layout.annotations:
+                if getattr(ann, "text", None):
+                    ann.text = translate_text(ann.text, use_lang)
+
+        # Legend title and trace names / hover templates.
+        try:
+            if getattr(layout, "legend", None) is not None and getattr(layout.legend, "title", None) is not None:
+                if getattr(layout.legend.title, "text", None):
+                    layout.legend.title.text = translate_text(layout.legend.title.text, use_lang)
+        except Exception:
+            pass
+
+        for trace in getattr(fig, "data", []) or []:
+            for attr in ["name", "hovertemplate", "texttemplate"]:
+                try:
+                    val = getattr(trace, attr, None)
+                    if isinstance(val, str):
+                        setattr(trace, attr, translate_text(val, use_lang))
+                except Exception:
+                    pass
+            try:
+                if getattr(trace, "text", None) is not None:
+                    txt = trace.text
+                    if isinstance(txt, str):
+                        trace.text = translate_text(txt, use_lang)
+                    elif isinstance(txt, (list, tuple)):
+                        trace.text = [translate_text(x, use_lang) if isinstance(x, str) else x for x in txt]
+            except Exception:
+                pass
+        return fig
+    except Exception:
+        return fig
+
+
+def render_floating_language_switcher(st: Any, page: str | None = None) -> None:  # type: ignore[no-redef]
+    """Render a fixed top-right language bubble with labels matching current UI language."""
+    try:
+        lang = st.session_state.get("app_language", DEFAULT_LANG)
+        current_page = page or st.session_state.get("page", "main")
+        if current_page not in {"home", "loading", "main"}:
+            current_page = "main"
+
+        label_sets = {
+            "zh-TW": {"zh-TW": "繁中", "zh-CN": "簡中", "en": "英文", "icon": "語言"},
+            "zh-CN": {"zh-TW": "繁中", "zh-CN": "简中", "en": "英文", "icon": "语言"},
+            "en": {"zh-TW": "Traditional", "zh-CN": "Simplified", "en": "English", "icon": "Lang"},
+        }
+        aria_sets = {
+            "zh-TW": {"zh-TW": "切換為繁體中文", "zh-CN": "切換為簡體中文", "en": "切換為英文"},
+            "zh-CN": {"zh-TW": "切换为繁体中文", "zh-CN": "切换为简体中文", "en": "切换为英文"},
+            "en": {"zh-TW": "Switch to Traditional Chinese", "zh-CN": "Switch to Simplified Chinese", "en": "Switch to English"},
+        }
+        labels = label_sets.get(lang, label_sets["en"])
+        aria_labels = aria_sets.get(lang, aria_sets["en"])
+
+        links = []
+        for code in ["zh-TW", "zh-CN", "en"]:
+            active = " active" if code == lang else ""
+            href = f"?lang={code}&page={current_page}"
+            links.append(
+                f'<a class="floating-lang-option{active}" href="{href}" '
+                f'target="_self" aria-label="{aria_labels[code]}">{labels[code]}</a>'
+            )
+
+        html = f"""
+        <style>
+        [data-testid="stSidebar"], [data-testid="collapsedControl"] {{
+            display: none !important;
+            visibility: hidden !important;
+        }}
+        .floating-lang-bubble {{
+            position: fixed;
+            right: max(16px, env(safe-area-inset-right));
+            top: calc(max(14px, env(safe-area-inset-top)) + 2px);
+            z-index: 2147483647;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 7px 8px;
+            border-radius: 999px;
+            background: rgba(12, 12, 14, 0.88);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 12px 34px rgba(0,0,0,0.38), 0 0 20px rgba(204,43,50,0.20);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+        }}
+        .floating-lang-icon {{
+            height: 32px;
+            min-width: 42px;
+            padding: 0 10px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(204,43,50,0.92), rgba(126,20,28,0.92));
+            color: #fff;
+            font-size: 12px;
+            font-weight: 800;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.20);
+            white-space: nowrap;
+        }}
+        .floating-lang-option {{
+            min-width: 34px;
+            height: 32px;
+            padding: 0 10px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.72) !important;
+            text-decoration: none !important;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            line-height: 1;
+            transition: all 0.16s ease;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            white-space: nowrap;
+        }}
+        .floating-lang-option:hover {{
+            background: rgba(255,255,255,0.10);
+            color: #fff !important;
+            transform: translateY(-1px);
+        }}
+        .floating-lang-option.active {{
+            background: #fff;
+            color: #111 !important;
+            box-shadow: 0 4px 12px rgba(255,255,255,0.16);
+        }}
+        @media (max-width: 560px) {{
+            .floating-lang-bubble {{
+                right: 10px;
+                top: calc(env(safe-area-inset-top, 0px) + 10px);
+                padding: 5px 6px;
+                gap: 3px;
+                max-width: calc(100vw - 20px);
+            }}
+            .floating-lang-icon {{ height: 28px; min-width: 34px; padding: 0 7px; font-size: 10px; }}
+            .floating-lang-option {{ min-width: 28px; height: 28px; padding: 0 7px; font-size: 11px; }}
+        }}
+        </style>
+        <nav class="floating-lang-bubble" aria-label="Language switcher">
+            <div class="floating-lang-icon" aria-hidden="true">🌐 {labels['icon']}</div>
+            {''.join(links)}
+        </nav>
+        """
+        # Bypass patched st.markdown to avoid translating CSS/HTML attributes.
+        raw_markdown = getattr(st.markdown, "__wrapped__", st.markdown)
+        raw_markdown(html, unsafe_allow_html=True)
+    except Exception:
+        pass
+
+
+def patch_streamlit(st: Any) -> None:  # type: ignore[no-redef]
+    """Patch Streamlit display/input APIs with strict language rendering."""
+    if getattr(st, "_tesla_i18n_patched_strict", False):
+        return
+    if not getattr(st, "_tesla_i18n_patched", False):
+        # Run the base patch first if it has not already been applied.
+        try:
+            # The original patch_streamlit name has been overridden, so replicate the
+            # important wrappers here instead of calling the old function.
+            pass
+        except Exception:
+            pass
+
+    # Avoid double wrapping from the earlier patch by always unwrapping once when possible.
+    def _base(fn):
+        return getattr(fn, "__wrapped__", fn)
+
+    for name in [
+        "title", "header", "subheader", "caption", "markdown", "write",
+        "success", "warning", "error", "info", "toast", "text", "code",
+    ]:
+        if hasattr(st, name):
+            setattr(st, name, _wrap_text_first_arg(_base(getattr(st, name))))
+
+    if hasattr(st, "spinner"):
+        st.spinner = _wrap_text_first_arg(_base(st.spinner))
+    if hasattr(st, "dialog"):
+        st.dialog = _wrap_text_first_arg(_base(st.dialog))
+    if hasattr(st, "expander"):
+        st.expander = _wrap_text_first_arg(_base(st.expander))
+
+    for name in [
+        "button", "download_button", "text_input", "text_area", "number_input",
+        "date_input", "slider", "checkbox", "file_uploader", "camera_input",
+    ]:
+        if hasattr(st, name):
+            setattr(st, name, _wrap_text_first_arg(_base(getattr(st, name))))
+
+    if hasattr(st, "image"):
+        _orig_image = _base(st.image)
+
+        @wraps(_orig_image)
+        def image_wrapper(image, *args, **kwargs):
+            if "caption" in kwargs:
+                kwargs["caption"] = translate_text(kwargs["caption"])
+            elif len(args) >= 1 and isinstance(args[0], str):
+                args = list(args)
+                args[0] = translate_text(args[0])
+            return _orig_image(image, *args, **kwargs)
+        st.image = image_wrapper
+
+    if hasattr(st, "tabs"):
+        _orig_tabs = _base(st.tabs)
+        @wraps(_orig_tabs)
+        def tabs_wrapper(tabs, *args, **kwargs):
+            return _orig_tabs([translate_text(x) for x in tabs], *args, **kwargs)
+        st.tabs = tabs_wrapper
+
+    for name in ["selectbox", "radio", "multiselect"]:
+        if hasattr(st, name):
+            orig = _base(getattr(st, name))
+            @wraps(orig)
+            def choice_wrapper(label, options=None, *args, __orig=orig, **kwargs):
+                label = translate_text(label)
+                original_format = kwargs.get("format_func")
+                if original_format is None:
+                    kwargs["format_func"] = lambda x: translate_option(x)
+                else:
+                    kwargs["format_func"] = lambda x, _fmt=original_format: translate_text(str(_fmt(x)))
+                return __orig(label, options, *args, **kwargs)
+            setattr(st, name, choice_wrapper)
+
+    if hasattr(st, "metric"):
+        _orig_metric = _base(st.metric)
+        @wraps(_orig_metric)
+        def metric_wrapper(label, value, delta=None, *args, **kwargs):
+            return _orig_metric(translate_text(label), value, translate_text(delta) if isinstance(delta, str) else delta, *args, **kwargs)
+        st.metric = metric_wrapper
+
+    if hasattr(st, "plotly_chart"):
+        _orig_plotly_chart = _base(st.plotly_chart)
+        @wraps(_orig_plotly_chart)
+        def plotly_wrapper(fig, *args, **kwargs):
+            return _orig_plotly_chart(translate_plotly_figure(fig), *args, **kwargs)
+        st.plotly_chart = plotly_wrapper
+
+    for name in ["dataframe", "table"]:
+        if hasattr(st, name):
+            orig = _base(getattr(st, name))
+            @wraps(orig)
+            def df_wrapper(data=None, *args, __orig=orig, **kwargs):
+                return __orig(translate_dataframe_for_display(data), *args, **kwargs)
+            setattr(st, name, df_wrapper)
+
+    st._tesla_i18n_patched = True
+    st._tesla_i18n_patched_strict = True
