@@ -1,0 +1,15 @@
+[server]
+# 啟用 /app/static/* 路徑提供 static 檔案（icon 等）
+enableStaticServing = true
+
+[theme]
+# Tesla 風格深色主題
+base = "dark"
+primaryColor = "#cc2b32"
+backgroundColor = "#0a0a0c"
+secondaryBackgroundColor = "#1a1a1f"
+textColor = "#f3f5f7"
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false

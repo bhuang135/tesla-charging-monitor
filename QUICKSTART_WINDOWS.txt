@@ -1,0 +1,27 @@
+Tesla Charging Monitor — Windows Quickstart
+
+1. Open CMD.
+
+2. Go to the project folder:
+
+cd C:\Users\Desktop\Git_Angela\Tesla\tesla_charging_monitor
+
+3. Create and activate venv:
+
+python -m venv .venv
+.venv\Scripts\activate
+
+4. Install packages:
+
+pip install -r requirements.txt
+
+5. Run Streamlit:
+
+streamlit run app.py
+
+6. Open the local URL shown in CMD, usually:
+
+http://localhost:8501
+
+Language switch:
+Use the sidebar selector "Language / 語言" to switch between 繁體中文, 简体中文, and English.

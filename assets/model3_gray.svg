@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 320" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#a8acb1"/>
+      <stop offset="40%" stop-color="#6e7479"/>
+      <stop offset="100%" stop-color="#3a3f44"/>
+    </linearGradient>
+    <linearGradient id="windowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1a1d20"/>
+      <stop offset="50%" stop-color="#2a2e33"/>
+      <stop offset="100%" stop-color="#15181b"/>
+    </linearGradient>
+    <linearGradient id="wheelGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#404448"/>
+      <stop offset="100%" stop-color="#15181b"/>
+    </linearGradient>
+    <radialGradient id="hubGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#c8ccd0"/>
+      <stop offset="60%" stop-color="#6e7479"/>
+      <stop offset="100%" stop-color="#2a2e33"/>
+    </radialGradient>
+    <linearGradient id="ground" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(0,0,0,0.55)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+    </linearGradient>
+    <filter id="softGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+  </defs>
+
+  <!-- Soft shadow under car -->
+  <ellipse cx="400" cy="265" rx="280" ry="14" fill="url(#ground)" filter="url(#softGlow)"/>
+
+  <!-- Car body: side profile of Tesla Model 3 -->
+  <!-- Lower body -->
+  <path d="M 90,235
+           L 110,210
+           Q 130,195 160,195
+           L 220,195
+           Q 250,165 320,150
+           Q 400,140 480,150
+           Q 560,165 600,195
+           L 680,200
+           Q 705,205 710,225
+           L 712,240
+           Q 712,250 700,250
+           L 100,250
+           Q 88,250 90,235 Z"
+        fill="url(#bodyGrad)"/>
+
+  <!-- Glass / cabin -->
+  <path d="M 235,195
+           Q 260,170 320,158
+           Q 400,150 480,158
+           Q 540,170 565,195
+           Z"
+        fill="url(#windowGrad)"/>
+
+  <!-- A-pillar highlight -->
+  <path d="M 232,196 Q 260,170 320,158 L 320,162 Q 262,173 235,200 Z"
+        fill="#9fa4a9" opacity="0.45"/>
+
+  <!-- B-pillar -->
+  <line x1="395" y1="155" x2="395" y2="195" stroke="#15181b" stroke-width="2.5"/>
+
+  <!-- Door line -->
+  <line x1="395" y1="200" x2="395" y2="240" stroke="#15181b" stroke-width="1.2" opacity="0.7"/>
+
+  <!-- Highlight reflection on hood -->
+  <path d="M 248,193 Q 320,175 480,177 Q 555,180 583,193"
+        fill="none" stroke="#d0d4d8" stroke-width="1.3" opacity="0.55"/>
+
+  <!-- Door handle (front) -->
+  <rect x="350" y="208" width="22" height="3.5" rx="1.5" fill="#15181b" opacity="0.85"/>
+  <!-- Door handle (rear) -->
+  <rect x="430" y="208" width="22" height="3.5" rx="1.5" fill="#15181b" opacity="0.85"/>
+
+  <!-- Headlight (front, right side of car as we look) -->
+  <ellipse cx="680" cy="220" rx="18" ry="6" fill="#f0f3f5" opacity="0.85"/>
+  <ellipse cx="680" cy="220" rx="10" ry="3.5" fill="#ffeacc"/>
+
+  <!-- Taillight (rear) -->
+  <rect x="98" y="215" width="22" height="6" rx="3" fill="#cc2b32"/>
+
+  <!-- Wheel wells -->
+  <ellipse cx="200" cy="248" rx="48" ry="42" fill="#0a0c0e"/>
+  <ellipse cx="600" cy="248" rx="48" ry="42" fill="#0a0c0e"/>
+
+  <!-- Wheels -->
+  <circle cx="200" cy="252" r="36" fill="url(#wheelGrad)"/>
+  <circle cx="600" cy="252" r="36" fill="url(#wheelGrad)"/>
+  <!-- Rims -->
+  <circle cx="200" cy="252" r="20" fill="url(#hubGrad)"/>
+  <circle cx="600" cy="252" r="20" fill="url(#hubGrad)"/>
+  <!-- Spokes (Model 3 aero style minimal) -->
+  <g stroke="#1a1d20" stroke-width="1.5" opacity="0.7">
+    <circle cx="200" cy="252" r="14" fill="none"/>
+    <circle cx="200" cy="252" r="7" fill="#404448"/>
+    <circle cx="600" cy="252" r="14" fill="none"/>
+    <circle cx="600" cy="252" r="7" fill="#404448"/>
+  </g>
+</svg>
