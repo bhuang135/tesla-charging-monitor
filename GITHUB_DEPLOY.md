@@ -77,4 +77,4 @@ Manage app → Reboot app
 English
 ```
 
-使用者可在 sidebar 裡的 `Language / 語言` 下拉選單切換語言。
+使用者可用畫面右下角的浮動語言球切換 `繁 / 简 / EN`，所有主要畫面會跟著切換語言。
