@@ -43,9 +43,23 @@ def current_language() -> str:
 
 
 def init_language_selector(st: Any) -> str:
-    """Render the language selector and store the selected language in session state."""
+    """Render the language selector and store the selected language in session state.
+
+    The app supports two visible entry points:
+    1. A sidebar selectbox for desktop users.
+    2. A home-page language pill powered by the `?lang=` URL parameter.
+    """
     if "app_language" not in st.session_state:
         st.session_state["app_language"] = DEFAULT_LANG
+
+    try:
+        qp_lang = st.query_params.get("lang")
+        if isinstance(qp_lang, list):
+            qp_lang = qp_lang[0] if qp_lang else None
+        if qp_lang in set(LANG_OPTIONS.values()):
+            st.session_state["app_language"] = qp_lang
+    except Exception:
+        pass
 
     current = st.session_state.get("app_language", DEFAULT_LANG)
     labels = list(LANG_OPTIONS.keys())
@@ -53,14 +67,17 @@ def init_language_selector(st: Any) -> str:
 
     try:
         with st.sidebar:
-            st.markdown("### 🌐 Language / 語言")
+            st.markdown("### 🌐 Language / 語言 / 语言")
             selected_label = st.selectbox(
-                "Choose app language",
+                "Choose app language / 選擇語言 / 选择语言",
                 labels,
                 index=labels.index(default_label) if default_label in labels else 0,
                 key="language_selector_display",
             )
-        st.session_state["app_language"] = LANG_OPTIONS[selected_label]
+        selected_lang = LANG_OPTIONS[selected_label]
+        if selected_lang != st.session_state.get("app_language"):
+            st.session_state["app_language"] = selected_lang
+            st.rerun()
     except Exception:
         # In rare cases Streamlit may not allow sidebar rendering yet.
         pass

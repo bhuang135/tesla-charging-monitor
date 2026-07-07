@@ -103,11 +103,19 @@ st.set_page_config(
     page_title="Tesla Charging Health Monitor",
     page_icon=_page_icon,
     layout="centered",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
 
 # ---------- Built-in multilingual UI ----------
-from translations import init_language_selector, patch_streamlit, tr, translate_text
+from translations import (
+    init_language_selector,
+    patch_streamlit,
+    tr,
+    translate_text,
+    current_language,
+    LANG_OPTIONS,
+    LANG_LABELS,
+)
 init_language_selector(st)
 patch_streamlit(st)
 
@@ -625,8 +633,47 @@ html, body {
 </style>
 """
 
+    lang = current_language()
+    home_text = {
+        "zh-TW": {
+            "welcome": "Welcome,",
+            "tagline": "你的 Model 3，你的旅程。<br/>全部集中管理。",
+            "battery": "電池健康",
+            "tracking": "智慧追蹤",
+            "insights": "駕駛洞察",
+            "analysis": "趨勢分析",
+            "enter": "進入 Angela 的 Model 3",
+        },
+        "zh-CN": {
+            "welcome": "Welcome,",
+            "tagline": "你的 Model 3，你的旅程。<br/>全部集中管理。",
+            "battery": "电池健康",
+            "tracking": "智能追踪",
+            "insights": "驾驶洞察",
+            "analysis": "趋势分析",
+            "enter": "进入 Angela 的 Model 3",
+        },
+        "en": {
+            "welcome": "Welcome,",
+            "tagline": "Your Model 3. Your Journey.<br/>All in One Place.",
+            "battery": "Battery Health",
+            "tracking": "Smart Tracking",
+            "insights": "Driving Insights",
+            "analysis": "Trend Analysis",
+            "enter": "Enter Angela's Model 3",
+        },
+    }.get(lang, {})
+
+    lang_links = []
+    for label, code in LANG_OPTIONS.items():
+        short = {"繁體中文": "繁", "简体中文": "简", "English": "EN"}.get(label, label)
+        active = " active" if code == lang else ""
+        lang_links.append(f'<a class="{active}" href="?lang={code}" target="_self">{short}</a>')
+    language_switcher_html = '<div class="home-lang-switcher">' + ''.join(lang_links) + '</div>'
+
     html_parts = [
         '<div class="tesla-home">',
+        language_switcher_html,
         '<div class="home-topbar">',
         '<div class="home-tesla-mark">T E S L A</div>',
         '<div class="home-pill"><span class="reddot"></span><span>Model 3</span></div>',
@@ -640,26 +687,26 @@ html, body {
         '<div class="home-model-divider"></div>',
         '</div>',
         '<div class="home-welcome">',
-        '<div class="home-welcome-label">Welcome,</div>',
+        f'<div class="home-welcome-label">{home_text.get("welcome", "Welcome,")}</div>',
         '<div class="home-name">Angela</div>',
         '<div class="home-name-underline"></div>',
         '</div>',
-        '<div class="home-tagline">Your Model 3. Your Journey.<br/>All in One Place.</div>',
+        f'<div class="home-tagline">{home_text.get("tagline", "Your Model 3. Your Journey.<br/>All in One Place.")}</div>',
         '<div class="home-cards">',
         '<div class="home-card">',
         '<div class="home-card-icon">🔋</div>',
-        '<div class="home-card-title">Battery Health</div>',
-        '<div class="home-card-sub">Smart Tracking</div>',
+        f'<div class="home-card-title">{home_text.get("battery", "Battery Health")}</div>',
+        f'<div class="home-card-sub">{home_text.get("tracking", "Smart Tracking")}</div>',
         '</div>',
         '<div class="home-card">',
         '<div class="home-card-icon">📈</div>',
-        '<div class="home-card-title">Driving Insights</div>',
-        '<div class="home-card-sub">Trend Analysis</div>',
+        f'<div class="home-card-title">{home_text.get("insights", "Driving Insights")}</div>',
+        f'<div class="home-card-sub">{home_text.get("analysis", "Trend Analysis")}</div>',
         '</div>',
         '</div>',
         # 進入按鈕 — 直接是 .tesla-home 的子元素
         '<a href="?enter=1" class="home-enter-btn" target="_self">'
-        "Enter Angela's Model 3 <span class=\"arrow\">→</span>"
+        f'{home_text.get("enter", "Enter Angela\'s Model 3")} <span class="arrow">→</span>'
         '</a>',
         '</div>',
     ]
@@ -833,6 +880,21 @@ if st.session_state.page == "loading":
 # 否則進入主 app — 後續是原本的監測 UI
 # ----------------------------------------------------------------
 inject_mobile_css()
+
+# ---------- Visible language switcher ----------
+_lang_labels = list(LANG_OPTIONS.keys())
+_current_lang = current_language()
+_current_label = LANG_LABELS.get(_current_lang, "繁體中文")
+_selected_lang_label = st.selectbox(
+    "🌐 Language / 語言 / 语言",
+    _lang_labels,
+    index=_lang_labels.index(_current_label) if _current_label in _lang_labels else 0,
+    key="main_visible_language_selector",
+)
+_new_lang = LANG_OPTIONS[_selected_lang_label]
+if _new_lang != st.session_state.get("app_language"):
+    st.session_state["app_language"] = _new_lang
+    st.rerun()
 
 
 # ---------- 頂部標題 ----------
