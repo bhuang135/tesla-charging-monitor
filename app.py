@@ -2,7 +2,7 @@
 Tesla 充電健康監測 App
 ======================
 追蹤並分析 Tesla 充電行為，跨多個時間區間（年、季、月、週、日、季節）。
-提供基於里程、電量百分比、充電頻率與行為模式的**電池健康代理（proxy）分析**。
+提供基於里程、電量百分比、充電頻率與行為模式的**電池健康程度分析**。
 
 注意：本工具不執行正式的 Tesla 電池診斷。沒有 kWh 充電量、實際電池容量或 BMS
 資料的情況下，只能做代理分析。
@@ -902,7 +902,7 @@ st.markdown(
     """
     <div class="app-header">
         <div class="app-title">🔋 Tesla 充電健康監測</div>
-        <div class="app-sub">電池健康<em>程度</em>分析</div>
+        <div class="app-sub">電池健康程度分析</div>
     </div>
     """,
     unsafe_allow_html=True,
